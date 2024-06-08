@@ -14,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -125,7 +126,100 @@ public class ClienteServiceTest {
 
     }
 
-    //Agregar una CA$ y CC$ --> success 2 cuentas, titular peperino
-    //Agregar una CA$ y CAU$S --> success 2 cuentas, titular peperino...
-    //Testear clienteService.buscarPorDni
+    @Test
+    public void testAgregarTiposCuentasSuccess() throws TipoCuentaAlreadyExistsException {
+        Cliente peperino = getCliente(26456439, "Pepe");
+
+        Cuenta cuentaCA = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(500000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        Cuenta cuentaCC = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(500000)
+                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+
+        when(clienteDao.find(26456439, true)).thenReturn(peperino);
+
+        //Agrego las cuentas
+        clienteService.agregarCuenta(cuentaCA, peperino.getDni());
+        clienteService.agregarCuenta(cuentaCC, peperino.getDni());
+
+        //Verifico si clienteDao.save fue usado 2 veces (ya que agregue dos cuentas
+        verify(clienteDao, times(2)).save(peperino);
+
+        //Verifico que cliente tenga 2 cuentas
+        assertEquals(2, peperino.getCuentas().size());
+        //Verifico que el titular de la cuenta es el cliente que se creo
+        assertEquals(peperino, cuentaCA.getTitular());
+        assertEquals(peperino, cuentaCC.getTitular());
+    }
+
+    @Test
+    public void testAgregarCuentasDiferentesDivisasSuccess() throws TipoCuentaAlreadyExistsException {
+        Cliente peperino = getCliente(26456439, "Pepe");
+
+        Cuenta cuentaCorrienteArs = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(600000)
+                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+        Cuenta cuentaCorrienteUsd = new Cuenta()
+                .setMoneda(TipoMoneda.DOLARES)
+                .setBalance(50000)
+                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+
+        when(clienteDao.find(26456439, true)).thenReturn(peperino);
+
+        //Agrego las cuentas
+        clienteService.agregarCuenta(cuentaCorrienteArs, peperino.getDni());
+        clienteService.agregarCuenta(cuentaCorrienteUsd, peperino.getDni());
+
+        //Verifico si clienteDao.save fue usado 2 veces (ya que agregue dos cuentas
+        verify(clienteDao, times(2)).save(peperino);
+
+        //Verifico que cliente tenga 2 cuentas
+        assertEquals(2, peperino.getCuentas().size());
+        //Verifico que el titular de la cuenta es el cliente que se creo
+        assertEquals(peperino, cuentaCorrienteArs.getTitular());
+        assertEquals(peperino, cuentaCorrienteUsd.getTitular());
+    }
+
+    @Test
+    public void testBuscarPorDniSucces(){
+        long dni = 123456789L;
+        Cliente peperino = getCliente(dni, "Pepo");
+
+        when(clienteDao.find(dni, false)).thenReturn(peperino);
+
+        Cliente resultado = clienteService.buscarClientePorDni(dni);
+
+        assertNotNull(resultado);
+        assertEquals(peperino, resultado);
+
+        verify(clienteDao, times(1)).find(dni, false);
+
+    }
+
+    @Test
+    public void testBuscarPorDniFail(){
+        long dni = 1234566789L;
+
+        when(clienteDao.find(dni, false)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () -> clienteService.buscarClientePorDni(dni));
+
+        verify(clienteDao, times(1)).find(dni, false);
+    }
+
+    public Cliente getCliente(long dni, String nombre){
+        Cliente cliente = new Cliente();
+        cliente.setDni(dni);
+        cliente.setNombre(nombre);
+        cliente.setApellido("Rino");
+        cliente.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        cliente.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        return cliente;
+    }
 }
