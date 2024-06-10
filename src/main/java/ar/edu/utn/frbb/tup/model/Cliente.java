@@ -47,8 +47,7 @@ public class Cliente extends Persona{
     }
 
     public boolean tieneCuenta(TipoCuenta tipoCuenta, TipoMoneda moneda) {
-        for (Cuenta cuenta:
-                cuentas) {
+        for (Cuenta cuenta: cuentas) {
             if (tipoCuenta.equals(cuenta.getTipoCuenta()) && moneda.equals(cuenta.getMoneda())) {
                 return true;
             }

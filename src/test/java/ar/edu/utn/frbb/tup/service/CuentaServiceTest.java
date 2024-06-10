@@ -28,9 +28,6 @@ public class CuentaServiceTest {
     private CuentaDao cuentaDao;
 
     @Mock
-    private ClienteDao clienteDao;
-
-    @Mock
     private ClienteService clienteService;
 
     @InjectMocks
@@ -42,7 +39,7 @@ public class CuentaServiceTest {
     }
 
     @Test
-    public void testCuentaCreadaSucces() throws TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException, TipoCuentaNoSoportadaException {
+    public void testCuentaCreadaSuccess() throws TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException, TipoCuentaNoSoportadaException {
         Cliente cliente = getCliente(123456789L, "Pepo");
         Cuenta cuenta = getCuenta(cliente, TipoMoneda.PESOS, TipoCuenta.CUENTA_CORRIENTE);
 
@@ -76,25 +73,25 @@ public class CuentaServiceTest {
     }
 
     @Test
-    public void testCuentaMismoTipo() throws TipoCuentaNoSoportadaException, TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException {
+    public void testCuentaMismoTipo() throws TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException, TipoCuentaNoSoportadaException {
         Cliente cliente = getCliente(123456789L, "Pepo");
         Cuenta cuenta = getCuenta(cliente, TipoMoneda.PESOS, TipoCuenta.CUENTA_CORRIENTE);
+        Cuenta cuentaRepetida = getCuenta(cliente, TipoMoneda.PESOS, TipoCuenta.CUENTA_CORRIENTE);
 
         when(cuentaDao.find(cuenta.getNumeroCuenta())).thenReturn(null);
 
         Cuenta resultado = cuentaDao.find(cuenta.getNumeroCuenta());
-
-        verify(cuentaDao, times(1)).find(cuenta.getNumeroCuenta());
         assertNull(resultado);
 
         cuentaService.darDeAltaCuenta(cuenta, cliente.getDni());
 
-        Cuenta cuentaRepetida = getCuenta(cliente, TipoMoneda.PESOS, TipoCuenta.CUENTA_CORRIENTE);
+        doThrow(TipoCuentaAlreadyExistsException.class).when(clienteService).agregarCuenta(cuentaRepetida, cliente.getDni());
 
-        assertThrows(TipoCuentaNoSoportadaException.class, () -> cuentaService.darDeAltaCuenta(cuentaRepetida, cliente.getDni()));
+        assertThrows(TipoCuentaAlreadyExistsException.class, () -> cuentaService.darDeAltaCuenta(cuentaRepetida, cliente.getDni()));
 
-        verify(cuentaDao, times(1)).find(cuenta.getNumeroCuenta());
-        assertEquals(1, cliente.getCuentas().size());
+        verify(clienteService, times(1)).agregarCuenta(cuentaRepetida, cliente.getDni());
+        verify(cuentaDao, times(1)).save(cuenta);
+        verify(cuentaDao, times(2)).find(cuenta.getNumeroCuenta());
     }
 
     public Cliente getCliente(long dni, String nombre){

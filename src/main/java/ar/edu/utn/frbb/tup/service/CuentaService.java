@@ -44,7 +44,6 @@ public class CuentaService {
 
     public boolean tipoCuentaEstaSoportada(Cuenta cuenta){
 
-
         if (cuenta.getMoneda() == TipoMoneda.DOLARES && cuenta.getTipoCuenta() == TipoCuenta.CAJA_AHORRO){
             return true; //Puede soportar una CAJA_AHORRO en dolares
         }

@@ -33,7 +33,7 @@ public class ClienteServiceTest {
 
     @BeforeAll
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+
     }
 
     @Test
@@ -186,18 +186,17 @@ public class ClienteServiceTest {
     }
 
     @Test
-    public void testBuscarPorDniSucces(){
-        long dni = 123456789L;
-        Cliente peperino = getCliente(dni, "Pepo");
+    public void testBuscarPorDniSuccess(){
+        Cliente peperino = getCliente(123456789L, "Pepo");
 
-        when(clienteDao.find(dni, false)).thenReturn(peperino);
+        when(clienteDao.find(peperino.getDni(), true)).thenReturn(peperino);
 
-        Cliente resultado = clienteService.buscarClientePorDni(dni);
+        Cliente resultado = clienteService.buscarClientePorDni(peperino.getDni());
 
         assertNotNull(resultado);
         assertEquals(peperino, resultado);
 
-        verify(clienteDao, times(1)).find(dni, false);
+        verify(clienteDao, times(1)).find(peperino.getDni(), true);
 
     }
 
@@ -205,11 +204,11 @@ public class ClienteServiceTest {
     public void testBuscarPorDniFail(){
         long dni = 1234566789L;
 
-        when(clienteDao.find(dni, false)).thenReturn(null);
+        when(clienteDao.find(dni, true)).thenReturn(null);
 
         assertThrows(IllegalArgumentException.class, () -> clienteService.buscarClientePorDni(dni));
 
-        verify(clienteDao, times(1)).find(dni, false);
+        verify(clienteDao, times(1)).find(dni, true);
     }
 
     public Cliente getCliente(long dni, String nombre){
