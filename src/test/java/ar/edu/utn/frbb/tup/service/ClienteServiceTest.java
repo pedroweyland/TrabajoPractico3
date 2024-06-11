@@ -10,14 +10,11 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
@@ -68,8 +65,6 @@ public class ClienteServiceTest {
         assertThrows(ClienteAlreadyExistsException.class, () -> clienteService.darDeAltaCliente(pepeRino));
     }
 
-
-
     @Test
     public void testAgregarCuentaAClienteSuccess() throws TipoCuentaAlreadyExistsException {
         Cliente pepeRino = new Cliente();
@@ -94,7 +89,6 @@ public class ClienteServiceTest {
         assertEquals(pepeRino, cuenta.getTitular());
 
     }
-
 
     @Test
     public void testAgregarCuentaAClienteDuplicada() throws TipoCuentaAlreadyExistsException {
@@ -126,6 +120,8 @@ public class ClienteServiceTest {
 
     }
 
+    //1. Agregar una CA$ y CC$ → se puede agregar y se debe verificar que el cliente tenga
+    //   2 cuentas, titular sea el cliente que se creó
     @Test
     public void testAgregarTiposCuentasSuccess() throws TipoCuentaAlreadyExistsException {
         Cliente peperino = getCliente(26456439, "Pepe");
@@ -146,7 +142,7 @@ public class ClienteServiceTest {
         clienteService.agregarCuenta(cuentaCA, peperino.getDni());
         clienteService.agregarCuenta(cuentaCC, peperino.getDni());
 
-        //Verifico si clienteDao.save fue usado 2 veces (ya que agregue dos cuentas
+        //Verifico si clienteDao.save fue usado 2 veces (ya que agregue dos cuentas)
         verify(clienteDao, times(2)).save(peperino);
 
         //Verifico que cliente tenga 2 cuentas
@@ -156,6 +152,8 @@ public class ClienteServiceTest {
         assertEquals(peperino, cuentaCC.getTitular());
     }
 
+    //2. Agregar una CA$ y CAU$S → se puede agregar y se debe verificar que el cliente
+    //   tenga 2 cuentas, titular sea el cliente que se creó
     @Test
     public void testAgregarCuentasDiferentesDivisasSuccess() throws TipoCuentaAlreadyExistsException {
         Cliente peperino = getCliente(26456439, "Pepe");
@@ -163,11 +161,11 @@ public class ClienteServiceTest {
         Cuenta cuentaCorrienteArs = new Cuenta()
                 .setMoneda(TipoMoneda.PESOS)
                 .setBalance(600000)
-                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
         Cuenta cuentaCorrienteUsd = new Cuenta()
                 .setMoneda(TipoMoneda.DOLARES)
                 .setBalance(50000)
-                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
 
         when(clienteDao.find(26456439, true)).thenReturn(peperino);
 
@@ -185,6 +183,8 @@ public class ClienteServiceTest {
         assertEquals(peperino, cuentaCorrienteUsd.getTitular());
     }
 
+    //3. Testear el método buscarPorDni (cómo mínimo son dos casos de test: casos de
+    //   éxito y de falla)
     @Test
     public void testBuscarPorDniSuccess(){
         Cliente peperino = getCliente(123456789L, "Pepo");

@@ -4,9 +4,7 @@ import ar.edu.utn.frbb.tup.model.*;
 import ar.edu.utn.frbb.tup.model.exception.CuentaAlreadyExistsException;
 import ar.edu.utn.frbb.tup.model.exception.TipoCuentaAlreadyExistsException;
 import ar.edu.utn.frbb.tup.model.exception.TipoCuentaNoSoportadaException;
-import ar.edu.utn.frbb.tup.persistence.ClienteDao;
 import ar.edu.utn.frbb.tup.persistence.CuentaDao;
-import net.bytebuddy.build.ToStringPlugin;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -38,17 +36,7 @@ public class CuentaServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    public void testCuentaCreadaSuccess() throws TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException, TipoCuentaNoSoportadaException {
-        Cliente cliente = getCliente(123456789L, "Pepo");
-        Cuenta cuenta = getCuenta(cliente, TipoMoneda.PESOS, TipoCuenta.CUENTA_CORRIENTE);
-
-        cuentaService.darDeAltaCuenta(cuenta, cliente.getDni());
-
-        verify(clienteService, times(1)).agregarCuenta(cuenta, cliente.getDni());
-        verify(cuentaDao, times(1)).save(cuenta);
-    }
-
+    //1. Cuenta existente → debería fallar con la exception indicada
     @Test
     public void testCuentaExistente(){
         Cliente cliente = getCliente(123456789L, "Pepo");
@@ -61,6 +49,7 @@ public class CuentaServiceTest {
         verify(cuentaDao, times(1)).find(cuenta.getNumeroCuenta());
     }
 
+    //2. Cuenta no soportada → debería fallar con una exception que deben generar
     @Test
     public void testCuentaTipoCuentaNoSoportada(){
         Cliente cliente = getCliente(123456789L, "Pepo");
@@ -72,6 +61,8 @@ public class CuentaServiceTest {
         assertThrows(TipoCuentaNoSoportadaException.class, () -> cuentaService.darDeAltaCuenta(cuenta, cliente.getDni()));
     }
 
+    //3. Cliente ya tiene cuenta de ese tipo → debería fallar en este caso el cliente service
+    //   (qué debe hacerse en para esto?)
     @Test
     public void testCuentaMismoTipo() throws TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException, TipoCuentaNoSoportadaException {
         Cliente cliente = getCliente(123456789L, "Pepo");
@@ -92,6 +83,19 @@ public class CuentaServiceTest {
         verify(clienteService, times(1)).agregarCuenta(cuentaRepetida, cliente.getDni());
         verify(cuentaDao, times(1)).save(cuenta);
         verify(cuentaDao, times(2)).find(cuenta.getNumeroCuenta());
+    }
+
+    //4. Cuenta creada exitosamente → debería verificarse que todas nuestras
+    //   dependencias fueran invocadas exitosamente.
+    @Test
+    public void testCuentaCreadaSuccess() throws TipoCuentaAlreadyExistsException, CuentaAlreadyExistsException, TipoCuentaNoSoportadaException {
+        Cliente cliente = getCliente(123456789L, "Pepo");
+        Cuenta cuenta = getCuenta(cliente, TipoMoneda.PESOS, TipoCuenta.CUENTA_CORRIENTE);
+
+        cuentaService.darDeAltaCuenta(cuenta, cliente.getDni());
+
+        verify(clienteService, times(1)).agregarCuenta(cuenta, cliente.getDni());
+        verify(cuentaDao, times(1)).save(cuenta);
     }
 
     public Cliente getCliente(long dni, String nombre){
